@@ -1,0 +1,88 @@
+version: "3"
+services:
+  #
+  # Reverse Proxy
+  #
+  traefik:
+    image: traefik
+    container_name: booking-system-proxy
+    command: -c /dev/null --api --docker --docker.domain=docker.localhost --logLevel=DEBUG
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  #
+  # Back-end database
+  #
+  booking-system-postgres:
+    image: postgres:alpine
+    container_name: booking-system-back-end-db
+    volumes:
+      - booking-system-postgres:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: booking-system
+      POSTGRES_USER: booking-system
+      POSTGRES_PASSWORD: booking-system
+
+  #
+  # Back-end
+  #
+  booking-system-back-end-typescript:
+    build: ./docker/node
+    container_name: booking-system-back-end-typescript
+    command: >
+      bash -c 'set -euo pipefail \
+        && yarn \
+        && yarn start:typescript'
+    volumes:
+      - ../back-end:/app
+
+  booking-system-back-end:
+    build: ./docker/node
+    container_name: booking-system-back-end
+    command: >
+      bash -c 'set -euo pipefail \
+        && yarn \
+        && yarn start'
+    volumes:
+      - ../back-end:/app
+    depends_on:
+      - booking-system-postgres
+      - booking-system-back-end-typescript
+    labels:
+      - "traefik.backend=booking-system-back-end"
+      - "traefik.api.frontend.rule=Host:api.booking-system.local"
+      - "traefik.client-api.frontend.rule=HostRegexp:{subdomain:[a-z|-]+}.api.booking-system.local"
+      - "traefik.docker.network=default"
+      - "traefik.api.port=3333"
+      - "traefik.client-api.port=3333"
+
+  #
+  # Web
+  #
+  booking-system-web:
+    build: ./docker/node
+    container_name: booking-system-web
+    command: >
+      bash -c 'set -euo pipefail \
+        && yarn \
+        && yarn start'
+    volumes:
+      - ../front-end:/app
+    labels:
+      - "traefik.backend=booking-system-web"
+      - "traefik.frontend.rule=Host:booking-system.local"
+      - "traefik.docker.network=default"
+      - "traefik.port=3300"
+
+volumes:
+  booking-system-postgres:
+    driver: "local"
+
+networks:
+  default:
+    driver: bridge
