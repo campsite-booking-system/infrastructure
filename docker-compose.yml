@@ -3,9 +3,9 @@ services:
   ##
   # Reverse Proxy
   ##
-  owlnite-proxy:
+  vulpee-proxy:
     image: traefik
-    container_name: owlnite-proxy
+    container_name: vulpee-proxy
     command: -c /dev/null --api --docker --docker.domain=docker.localhost --logLevel=DEBUG
     ports:
       - "80:80"
@@ -16,24 +16,24 @@ services:
   ##
   # Back-end database
   ##
-  owlnite-postgres:
+  vulpee-postgres:
     image: postgres:alpine
-    container_name: owlnite-back-end-db
+    container_name: vulpee-back-end-db
     volumes:
-      - owlnite-postgres:/var/lib/postgresql
+      - vulpee-postgres:/var/lib/postgresql
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: owlnite
-      POSTGRES_USER: owlnite
-      POSTGRES_PASSWORD: owlnite
+      POSTGRES_DB: vulpee
+      POSTGRES_USER: vulpee
+      POSTGRES_PASSWORD: vulpee
 
   ##
   # Back-end
   ##
-  owlnite-back-end-typescript:
+  vulpee-back-end-typescript:
     build: ./docker/node
-    container_name: owlnite-back-end-typescript
+    container_name: vulpee-back-end-typescript
     command: >
       bash -c 'set -euo pipefail \
         && npm install \
@@ -43,9 +43,9 @@ services:
       - ~/.npmrc:/root/.npmrc
     working_dir: /app
 
-  owlnite-back-end:
+  vulpee-back-end:
     build: ./docker/node
-    container_name: owlnite-back-end
+    container_name: vulpee-back-end
     command: >
       bash -c 'set -euo pipefail \
         && npm install \
@@ -55,12 +55,12 @@ services:
       - ~/.npmrc:/root/.npmrc
     working_dir: /app
     depends_on:
-      - owlnite-postgres
-      - owlnite-back-end-typescript
+      - vulpee-postgres
+      - vulpee-back-end-typescript
     labels:
-      - "traefik.backend=owlnite-back-end"
-      - "traefik.api.frontend.rule=Host:api.owlnite.local"
-      - "traefik.client-api.frontend.rule=HostRegexp:{subdomain:[a-z|-]+}.api.owlnite.local"
+      - "traefik.backend=vulpee-back-end"
+      - "traefik.api.frontend.rule=Host:api.vulpee.local"
+      - "traefik.client-api.frontend.rule=HostRegexp:{subdomain:[a-z|-]+}.api.vulpee.local"
       - "traefik.docker.network=default"
       - "traefik.api.port=3333"
       - "traefik.client-api.port=3333"
@@ -68,9 +68,9 @@ services:
   ##
   # Admin
   ##
-  owlnite-admin:
+  vulpee-admin:
     build: ./docker/node
-    container_name: owlnite-admin
+    container_name: vulpee-admin
     command: >
       bash -c 'set -euo pipefail \
         && npm install \
@@ -80,17 +80,17 @@ services:
       - ~/.npmrc:/root/.npmrc
     working_dir: /app
     labels:
-      - "traefik.backend=owlnite-admin"
-      - "traefik.frontend.rule=Host:app.owlnite.local"
+      - "traefik.backend=vulpee-admin"
+      - "traefik.frontend.rule=Host:app.vulpee.local"
       - "traefik.docker.network=default"
       - "traefik.port=3300"
 
   ##
   # Storybook
   ##
-  owlnite-storybook:
+  vulpee-storybook:
     build: ./docker/node
-    container_name: owlnite-storybook
+    container_name: vulpee-storybook
     command: >
       bash -c 'set -euo pipefail \
         && npm install \
@@ -100,13 +100,13 @@ services:
       - ~/.npmrc:/root/.npmrc
     working_dir: /app
     labels:
-      - "traefik.backend=owlnite-storybook"
-      - "traefik.frontend.rule=Host:ui.owlnite.local"
+      - "traefik.backend=vulpee-storybook"
+      - "traefik.frontend.rule=Host:ui.vulpee.local"
       - "traefik.docker.network=default"
       - "traefik.port=3300"
 
 volumes:
-  owlnite-postgres:
+  vulpee-postgres:
     driver: "local"
 
 networks:
