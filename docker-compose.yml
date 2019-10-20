@@ -4,13 +4,17 @@ services:
   # Reverse Proxy
   ##
   vulpee-proxy:
-    image: traefik
+    image: traefik:v2.0
     container_name: vulpee-proxy
-    command: -c /dev/null --api --docker --docker.domain=docker.localhost --logLevel=DEBUG
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
     ports:
       - "80:80"
       - "8080:8080"
     volumes:
+      - ./traefik.yaml:/etc/traefik/traefik.yaml \
       - /var/run/docker.sock:/var/run/docker.sock
 
   ##
@@ -58,12 +62,9 @@ services:
       - vulpee-postgres
       - vulpee-back-end-typescript
     labels:
-      - "traefik.backend=vulpee-back-end"
-      - "traefik.api.frontend.rule=Host:api.vulpee.local"
-      - "traefik.client-api.frontend.rule=HostRegexp:{subdomain:[a-z|-]+}.api.vulpee.local"
-      - "traefik.docker.network=default"
-      - "traefik.api.port=3333"
-      - "traefik.client-api.port=3333"
+      - "traefik.enable=true"
+      - "traefik.http.services.backend.loadbalancer.server.port=3333"
+      - "traefik.http.routers.backend.rule=HostRegexp(`api.vulpee.local`, `{subdomain:[a-z]+}.api.vulpee.local`)"
 
   ##
   # Admin
@@ -80,11 +81,9 @@ services:
       - ~/.npmrc:/root/.npmrc
     working_dir: /app
     labels:
-      - "traefik.backend=vulpee-admin"
-      - "traefik.frontend.rule=Host:app.vulpee.local"
-      - "traefik.docker.network=default"
-      - "traefik.port=3300"
-
+      - "traefik.enable=true"
+      - "traefik.http.services.admin.loadbalancer.server.port=3300"
+      - "traefik.http.routers.admin.rule=Host(`app.vulpee.local`)"
   ##
   # Storybook
   ##
@@ -100,10 +99,9 @@ services:
       - ~/.npmrc:/root/.npmrc
     working_dir: /app
     labels:
-      - "traefik.backend=vulpee-storybook"
-      - "traefik.frontend.rule=Host:ui.vulpee.local"
-      - "traefik.docker.network=default"
-      - "traefik.port=3300"
+      - "traefik.enable=true"
+      - "traefik.http.services.ui.loadbalancer.server.port=3301"
+      - "traefik.http.routers.ui.rule=Host(`ui.vulpee.local`)"
 
 volumes:
   vulpee-postgres:
