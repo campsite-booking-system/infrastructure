@@ -23,5 +23,5 @@ echo "### Migrating the DB ###"
 npm run db:migrate -- --force
 
 echo "### Restart PM2 process ###"
-env HOME=/var/www/vulpee/back-end/ pm2 restart vulpee-back-end
+pm2 startOrRestart /var/www/vulpee/back-end/ecosystem.json
 
