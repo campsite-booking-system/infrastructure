@@ -13,6 +13,9 @@ git reset origin/master --hard
 echo "### Installing depenencies ###"
 npm install
 
+echo "### Building the documentation ###"
+npm run docs:private:build
+
 echo "### Building the app ###"
 npm run build
 
